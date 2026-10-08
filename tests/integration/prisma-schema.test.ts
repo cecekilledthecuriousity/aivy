@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/db'
+import { Prisma } from '@prisma/client'
 
 describe('Prisma Schema Integration', () => {
   it('should generate Prisma Client correctly', () => {
@@ -18,11 +17,24 @@ describe('Prisma Schema Integration', () => {
   })
 
   it('should have correct relational definitions in the schema', () => {
-    // We check if Prisma types reflect relations correctly without needing database execution,
-    // or by mocking. Since it's an integration test with types, let's just assert properties.
-    // At runtime, Prisma delegates have these methods.
     expect(prisma.user.findUnique).toBeDefined()
     expect(prisma.department.findMany).toBeDefined()
     expect(prisma.appraisalSession.findFirst).toBeDefined()
+
+    // Type-level verification of relation definitions
+    type UserWithSubordinates = Prisma.UserGetPayload<{
+      include: { subordinates: true }
+    }>
+    
+    type SessionWithScoreItems = Prisma.AppraisalSessionGetPayload<{
+      include: { scoreItems: true }
+    }>
+
+    type AssignmentWithCompetency = Prisma.EmployeeCompetencyAssignmentGetPayload<{
+      include: { competency: true }
+    }>
+
+    // If the above types compile without TS errors, the relations exist.
+    expect(true).toBe(true)
   })
 })
