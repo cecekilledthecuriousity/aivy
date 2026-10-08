@@ -36,6 +36,10 @@ interface SkillMatrixFormProps {
   initialManagerNotes: string;
 }
 
+const isCompleteIdp = (item?: { actionPlan?: string; targetDate?: string }) => {
+  return Boolean(item && item.actionPlan && item.actionPlan.trim().length > 0 && item.targetDate && item.targetDate.trim().length > 0);
+};
+
 export function SkillMatrixForm({
   sessionId,
   status,
@@ -97,11 +101,16 @@ export function SkillMatrixForm({
   const handleSaveDraft = async () => {
     setIsDrafting(true);
     try {
+      const sanitizedIdpItems = Object.values(idpItems).filter(isCompleteIdp).map(item => ({
+        competencyId: item.competencyId,
+        actionPlan: item.actionPlan.trim(),
+        targetDate: item.targetDate,
+      }));
       const input: EvaluationInput = {
         sessionId,
         managerNotes,
         scores: Object.values(scores),
-        idpItems: Object.values(idpItems).filter(item => item.actionPlan.trim() !== '' && item.targetDate !== '')
+        idpItems: sanitizedIdpItems
       };
       await saveEvaluationDraftAction(input);
       alert("Draft saved successfully");
@@ -120,34 +129,34 @@ export function SkillMatrixForm({
       return;
     }
 
-    const missingIdp = competencies.filter(c => {
+    const negativeGapCompetencies = competencies.filter(c => {
       const score = scores[c.id]?.actualLevel || 0;
-      const gap = score - c.standardLevel;
-      if (gap < 0) {
-        const idp = idpItems[c.id];
-        return !idp || idp.actionPlan.trim() === '' || idp.targetDate === '';
-      }
-      return false;
+      return score > 0 && (score - c.standardLevel) < 0;
     });
 
-    if (missingIdp.length > 0) {
-      alert("Please provide complete IDP (Action Plan and Target Date) for all competencies with a negative gap.");
+    const negativeGapsWithoutIdp = negativeGapCompetencies.some(c => {
+      const idp = idpItems[c.id];
+      return !isCompleteIdp(idp);
+    });
+
+    if (negativeGapsWithoutIdp) {
+      alert("Semua kompetensi dengan GAP negatif wajib dilengkapi Rencana Pengembangan (Action Plan & Target Date).");
       return;
     }
 
     if (!confirm("Are you sure you want to submit? It cannot be edited after.")) return;
     setIsSubmitting(true);
     try {
+      const sanitizedIdpItems = Object.values(idpItems).filter(isCompleteIdp).map(item => ({
+        competencyId: item.competencyId,
+        actionPlan: item.actionPlan.trim(),
+        targetDate: item.targetDate,
+      }));
       const input: EvaluationInput = {
         sessionId,
         managerNotes,
         scores: Object.values(scores),
-        idpItems: Object.values(idpItems).filter(item => {
-          const comp = competencies.find(c => c.id === item.competencyId);
-          if (!comp) return false;
-          const score = scores[comp.id]?.actualLevel || 0;
-          return score > 0 && score - comp.standardLevel < 0 && item.actionPlan.trim() !== '' && item.targetDate !== '';
-        })
+        idpItems: sanitizedIdpItems
       };
       await submitManagerEvaluationAction(input);
       alert("Evaluation submitted successfully");
