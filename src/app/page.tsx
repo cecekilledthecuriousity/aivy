@@ -71,10 +71,10 @@ export default async function HomePage() {
             <ArrowRight className="w-4 h-4 text-slate-900" />
           </Link>
           <Link
-            href="/login"
+            href="/appraisals/aivy-8841"
             className="inline-flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl bg-white/90 hover:bg-white text-slate-700 border border-slate-200 font-bold text-sm transition-all shadow-2xs"
           >
-            <span>Halaman Login</span>
+            <span>Detail Appraisal</span>
           </Link>
         </div>
       </section>

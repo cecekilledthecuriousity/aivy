@@ -53,12 +53,6 @@ export default function RootLayout({
               >
                 Dasbor HR (TNA)
               </Link>
-              <Link
-                href="/login"
-                className="ml-2 px-3.5 py-1.5 text-xs sm:text-sm font-bold bg-[#FF9A8B] hover:bg-[#FFC3A0] text-slate-900 rounded-xl shadow-xs transition"
-              >
-                Sign In
-              </Link>
             </nav>
           </div>
         </header>

@@ -147,15 +147,14 @@ export default function LoginPage() {
             </label>
           </div>
 
-          {/* Primary Action Button (Coral #FF9A8B with high contrast dark navy text) */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 px-4 rounded-2xl bg-[#FF9A8B] hover:bg-[#FFC3A0] text-slate-900 font-extrabold text-sm shadow-soft hover:shadow-md transition-all active:scale-98 flex items-center justify-center space-x-2 cursor-pointer mt-2 disabled:opacity-70"
+          {/* Primary Action Button */}
+          <Link
+            href="/dashboard"
+            className="w-full py-3 px-4 rounded-2xl bg-[#FF9A8B] hover:bg-[#FFC3A0] text-slate-900 font-extrabold text-sm shadow-soft hover:shadow-md transition-all active:scale-98 flex items-center justify-center space-x-2 cursor-pointer mt-2"
           >
-            <span>{isLoading ? 'Verifying Credentials...' : 'Sign In to AIVY'}</span>
-            {!isLoading && <ArrowRight className="w-4 h-4 text-slate-900" />}
-          </button>
+            <span>Buka Dashboard Langsung</span>
+            <ArrowRight className="w-4 h-4 text-slate-900" />
+          </Link>
         </form>
 
         {/* Demo Fast Access Section */}

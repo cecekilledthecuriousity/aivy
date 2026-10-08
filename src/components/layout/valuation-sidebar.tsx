@@ -164,26 +164,15 @@ export function ValuationSidebar({ className = '' }: SidebarProps) {
         </div>
 
         {/* User Profile Card & Sign Out */}
-        <div className="pt-4 border-t border-slate-200/60 space-y-2">
-          <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50/80 hover:bg-slate-100/80 transition">
-            <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#FECF6A] via-[#FFC3A0] to-[#FF9A8B] flex items-center justify-center font-bold text-xs text-slate-900 shadow-xs">
-                AR
-              </div>
-              <div className="text-left">
-                <div className="text-xs font-bold text-slate-900 leading-tight">Alexandra Ross</div>
-                <div className="text-[10px] text-slate-500">Senior Valuer</div>
-              </div>
+          <div className="flex items-center space-x-2.5 p-2 rounded-2xl bg-slate-50/80">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#FECF6A] via-[#FFC3A0] to-[#FF9A8B] flex items-center justify-center font-bold text-xs text-slate-900 shadow-xs flex-shrink-0">
+              AR
             </div>
-            <Link
-              href="/login"
-              className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </Link>
+            <div className="text-left">
+              <div className="text-xs font-bold text-slate-900 leading-tight">Alexandra Ross</div>
+              <div className="text-[10px] text-slate-500">Senior Valuer</div>
+            </div>
           </div>
-        </div>
       </aside>
     </>
   );
