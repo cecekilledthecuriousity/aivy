@@ -54,5 +54,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ sessionI
   headers.set('Content-Type', 'application/pdf');
   headers.set('Content-Disposition', `attachment; filename="rapor-evaluasi-${appraisalSession.employee.employeeCode}.pdf"`);
 
-  return new NextResponse(pdfBuffer, { status: 200, headers });
+  return new NextResponse(new Uint8Array(pdfBuffer), { status: 200, headers });
 }

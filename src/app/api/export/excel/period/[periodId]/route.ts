@@ -32,5 +32,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ periodId
   headers.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   headers.set('Content-Disposition', `attachment; filename="rekap-evaluasi-${period.name}.xlsx"`);
 
-  return new NextResponse(excelBuffer, { status: 200, headers });
+  return new NextResponse(new Uint8Array(excelBuffer), { status: 200, headers });
 }
