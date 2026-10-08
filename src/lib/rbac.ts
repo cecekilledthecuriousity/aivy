@@ -11,11 +11,7 @@ export function canAccessSession(
   if (user.role === Role.HR_ADMIN) return true;
 
   if (user.role === Role.MANAGER) {
-    return session.evaluatorId === user.id || session.employeeId === user.id; 
-    // Wait, let's strictly follow the tests for MANAGER.
-    // The test says "MANAGER can view session if they are the evaluator".
-    // "MANAGER can view session if they are the manager of the user (even if not evaluator directly)" - my test expects false for this actually because I couldn't check it from just session.
-    // Let's implement based on my test: session.evaluatorId === user.id
+    return session.evaluatorId === user.id || (session.employeeId === user.id && session.status === AppraisalStatus.PUBLISHED);
   }
 
   if (user.role === Role.EMPLOYEE) {

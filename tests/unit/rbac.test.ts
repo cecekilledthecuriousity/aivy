@@ -29,18 +29,16 @@ describe('RBAC Guards', () => {
       expect(canAccessSession(user, { ...sessionBase, status: AppraisalStatus.PUBLISHED })).toBe(true);
     });
 
-    it('MANAGER can view session if they are the manager of the user (even if not evaluator directly)', () => {
-      // Actually, wait, the requirement says "if session.evaluatorId === user.id or user is their manager".
-      // But the session object in canAccessSession is: { employeeId: string; evaluatorId: string; status: AppraisalStatus }
-      // So we don't know the manager of employeeId from just the session, unless we pass managerId of employee to session?
-      // Wait, the prompt says:
-      // canAccessSession(user: { id: string; role: Role; managerId?: string | null }, session: { employeeId: string; evaluatorId: string; status: AppraisalStatus }): boolean
-      // If user is their manager... Wait, "user is their manager" means "session.employeeId === user.id" ? No, that means the user is the employee.
-      // If `session.evaluatorId === user.id`, it means they are the evaluator.
-      // If `user is their manager`? But the user object has `managerId`, which means the user's manager.
-      // Ah! Maybe MANAGER cannot access if they aren't the evaluator. Let's just implement `session.evaluatorId === user.id` for MANAGER.
-      const user = { id: 'mgr2', role: Role.MANAGER }; // not the evaluator
+    it('MANAGER cannot view session if they are not the evaluator and session is not published', () => {
+      const user = { id: 'mgr2', role: Role.MANAGER };
       expect(canAccessSession(user, { ...sessionBase, status: AppraisalStatus.PENDING_EVALUATION })).toBe(false);
+    });
+
+    it('MANAGER who is the employee being evaluated must only view their own appraisal if session.status is PUBLISHED', () => {
+      const user = { id: 'mgr_emp', role: Role.MANAGER };
+      const ownSession = { employeeId: 'mgr_emp', evaluatorId: 'admin1' };
+      expect(canAccessSession(user, { ...ownSession, status: AppraisalStatus.PENDING_EVALUATION })).toBe(false);
+      expect(canAccessSession(user, { ...ownSession, status: AppraisalStatus.PUBLISHED })).toBe(true);
     });
 
     it('EMPLOYEE can view their own session ONLY when status is PUBLISHED', () => {
@@ -69,7 +67,6 @@ describe('RBAC Guards', () => {
       const user = { id: 'admin1', role: Role.HR_ADMIN };
       expect(canEditSession(user, { ...sessionBase, status: AppraisalStatus.SUBMITTED })).toBe(true);
       expect(canEditSession(user, { ...sessionBase, status: AppraisalStatus.APPROVED })).toBe(true);
-      // Wait, can HR_ADMIN edit published? Usually yes or doesn't matter. Let's assume true.
       expect(canEditSession(user, { ...sessionBase, status: AppraisalStatus.PUBLISHED })).toBe(true);
     });
 
