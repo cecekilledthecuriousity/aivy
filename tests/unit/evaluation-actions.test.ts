@@ -85,6 +85,7 @@ describe("Evaluation Actions", () => {
     };
 
     it("saveEvaluationDraftAction should calculate GAP and save automatically", async () => {
+      vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } } as any);
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.appraisalSession.findUnique.mockResolvedValue(mockSession);
       
@@ -108,7 +109,7 @@ describe("Evaluation Actions", () => {
         ],
       };
 
-      await saveEvaluationDraftAction(input, "user-1");
+      await saveEvaluationDraftAction(input);
 
       expect(mockTx.appraisalScoreItem.createMany).toHaveBeenCalledWith({
         data: [
@@ -126,6 +127,7 @@ describe("Evaluation Actions", () => {
     });
 
     it("submitManagerEvaluationAction should transition status to SUBMITTED", async () => {
+      vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } } as any);
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.appraisalSession.findUnique.mockResolvedValue(mockSession);
       
@@ -149,7 +151,7 @@ describe("Evaluation Actions", () => {
         ],
       };
 
-      await submitManagerEvaluationAction(input, "user-1");
+      await submitManagerEvaluationAction(input);
 
       expect(mockTx.appraisalSession.update).toHaveBeenCalledWith({
         where: { id: "sess-1" },
@@ -161,6 +163,7 @@ describe("Evaluation Actions", () => {
     });
 
     it("should reject when user is not authorized", async () => {
+      vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-2" } } as any);
       const otherUser = { id: "user-2", role: Role.EMPLOYEE };
       mockPrisma.user.findUnique.mockResolvedValue(otherUser);
       mockPrisma.appraisalSession.findUnique.mockResolvedValue(mockSession);
@@ -170,10 +173,11 @@ describe("Evaluation Actions", () => {
         scores: [{ competencyId: "comp-1", actualLevel: 2 }],
       };
 
-      await expect(saveEvaluationDraftAction(input, "user-2")).rejects.toThrow("Unauthorized to edit this session");
+      await expect(saveEvaluationDraftAction(input)).rejects.toThrow("Unauthorized to edit this session");
     });
 
     it("should reject submit when session is already SUBMITTED", async () => {
+      vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } } as any);
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, role: Role.HR_ADMIN });
       mockPrisma.appraisalSession.findUnique.mockResolvedValue({
         ...mockSession,
@@ -185,10 +189,11 @@ describe("Evaluation Actions", () => {
         scores: [{ competencyId: "comp-1", actualLevel: 2 }],
       };
 
-      await expect(submitManagerEvaluationAction(input, "user-1")).rejects.toThrow("Cannot submit evaluation in SUBMITTED status");
+      await expect(submitManagerEvaluationAction(input)).rejects.toThrow("Cannot submit evaluation in SUBMITTED status");
     });
 
     it("should reject when competency is not assigned", async () => {
+      vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } } as any);
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.appraisalSession.findUnique.mockResolvedValue(mockSession);
 
@@ -204,10 +209,11 @@ describe("Evaluation Actions", () => {
         scores: [{ competencyId: "comp-unknown", actualLevel: 2 }],
       };
 
-      await expect(saveEvaluationDraftAction(input, "user-1")).rejects.toThrow("Competency comp-unknown not assigned to employee");
+      await expect(saveEvaluationDraftAction(input)).rejects.toThrow("Competency comp-unknown not assigned to employee");
     });
 
     it("should persist IDP when idpItems are provided", async () => {
+      vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } } as any);
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.appraisalSession.findUnique.mockResolvedValue(mockSession);
       
@@ -233,7 +239,7 @@ describe("Evaluation Actions", () => {
         ]
       };
 
-      await saveEvaluationDraftAction(input, "user-1");
+      await saveEvaluationDraftAction(input);
 
       expect(mockTx.iDPItem.deleteMany).toHaveBeenCalledWith({ where: { sessionId: "sess-1" } });
       expect(mockTx.iDPItem.createMany).toHaveBeenCalledWith({
@@ -276,7 +282,7 @@ describe("Evaluation Actions", () => {
         scores: [{ competencyId: "comp-1", actualLevel: 2 }],
       };
 
-      await saveEvaluationDraftAction(input); // No providedUserId
+      await saveEvaluationDraftAction(input); 
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { id: "user-1" } });
     });

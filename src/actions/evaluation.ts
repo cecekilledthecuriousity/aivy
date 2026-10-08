@@ -11,11 +11,10 @@ import { authOptions } from "@/lib/auth";
 
 async function processEvaluation(
   input: EvaluationInput,
-  providedUserId?: string,
   targetStatus?: AppraisalStatus
 ) {
   const sessionUser = await getServerSession(authOptions);
-  const userId = providedUserId || sessionUser?.user?.id;
+  const userId = sessionUser?.user?.id;
 
   if (!userId) {
     throw new Error("Unauthorized");
@@ -133,10 +132,10 @@ async function processEvaluation(
   });
 }
 
-export async function saveEvaluationDraftAction(input: EvaluationInput, providedUserId?: string) {
-  return await processEvaluation(input, providedUserId);
+export async function saveEvaluationDraftAction(input: EvaluationInput) {
+  return await processEvaluation(input);
 }
 
-export async function submitManagerEvaluationAction(input: EvaluationInput, providedUserId?: string) {
-  return await processEvaluation(input, providedUserId, AppraisalStatus.SUBMITTED);
+export async function submitManagerEvaluationAction(input: EvaluationInput) {
+  return await processEvaluation(input, AppraisalStatus.SUBMITTED);
 }
