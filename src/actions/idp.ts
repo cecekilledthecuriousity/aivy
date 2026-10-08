@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { IDPStatus, Role } from "@prisma/client";
+import { canAccessSession } from "@/lib/rbac";
+import { revalidatePath } from "next/cache";
 
 export async function updateIDPStatusAction(idpId: string, status: IDPStatus) {
   const session = await getServerSession(authOptions);
@@ -21,11 +23,12 @@ export async function updateIDPStatusAction(idpId: string, status: IDPStatus) {
   }
 
   const user = session.user as any;
-  const isEmployee = idpItem.session.employeeId === user.id;
-  const isEvaluator = idpItem.session.evaluatorId === user.id;
-  const isAdmin = user.role === Role.HR_ADMIN;
-
-  if (!isEmployee && !isEvaluator && !isAdmin) {
+  const hasAccess = canAccessSession(
+    { id: user.id, role: user.role as Role },
+    idpItem.session
+  );
+  
+  if (!hasAccess) {
     throw new Error("Forbidden");
   }
 
@@ -34,5 +37,6 @@ export async function updateIDPStatusAction(idpId: string, status: IDPStatus) {
     data: { status },
   });
 
+  revalidatePath("/portal/my-evaluation");
   return updated;
 }

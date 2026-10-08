@@ -6,6 +6,14 @@ import { CompetencyRadarChart } from "@/components/charts/competency-radar-chart
 import { GapBadge } from "@/components/evaluation/gap-badge";
 import { IDPTrackerTable } from "@/components/idp/idp-tracker-table";
 
+function safeParseJsonArray(val?: string | null): string[] {
+  try {
+    return val ? JSON.parse(val) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function MyEvaluationPage() {
   const session = await getServerSession(authOptions);
   
@@ -68,7 +76,7 @@ export default async function MyEvaluationPage() {
             <div>
               <h3 className="font-semibold text-green-700 mb-2">Top Strengths</h3>
               <ul className="list-disc pl-5">
-                {JSON.parse(evaluation.aiSummary.topStrengthsJson).map((s: string, i: number) => (
+                {safeParseJsonArray(evaluation.aiSummary.topStrengthsJson).map((s: string, i: number) => (
                   <li key={i} className="text-gray-700">{s}</li>
                 ))}
               </ul>
@@ -76,7 +84,7 @@ export default async function MyEvaluationPage() {
             <div>
               <h3 className="font-semibold text-amber-700 mb-2">Growth Areas</h3>
               <ul className="list-disc pl-5">
-                {JSON.parse(evaluation.aiSummary.growthAreasJson).map((s: string, i: number) => (
+                {safeParseJsonArray(evaluation.aiSummary.growthAreasJson).map((s: string, i: number) => (
                   <li key={i} className="text-gray-700">{s}</li>
                 ))}
               </ul>
@@ -85,7 +93,7 @@ export default async function MyEvaluationPage() {
           <div className="mt-4">
             <h3 className="font-semibold text-blue-700 mb-2">Action Recommendations</h3>
             <ul className="list-disc pl-5">
-              {JSON.parse(evaluation.aiSummary.actionRecommendationsJson).map((s: string, i: number) => (
+              {safeParseJsonArray(evaluation.aiSummary.actionRecommendationsJson).map((s: string, i: number) => (
                 <li key={i} className="text-gray-700">{s}</li>
               ))}
             </ul>
