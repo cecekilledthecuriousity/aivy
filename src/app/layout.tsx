@@ -33,24 +33,31 @@ export default function RootLayout({
               </Link>
             </div>
 
-            <nav className="flex items-center space-x-1 sm:space-x-3">
+            <nav className="flex items-center space-x-1 sm:space-x-2">
               <Link
-                href="/"
-                className="px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition"
+                href="/dashboard"
+                className="px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-800 hover:text-[#FF9A8B] hover:bg-slate-50 rounded-xl transition flex items-center space-x-1"
               >
-                Beranda
+                <span className="w-2 h-2 rounded-full bg-[#FF9A8B] inline-block" />
+                <span>AIVY Dashboard</span>
               </Link>
               <Link
                 href="/portal/my-evaluation"
-                className="px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition"
+                className="px-2.5 py-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition"
               >
                 Portal Karyawan
               </Link>
               <Link
                 href="/admin/analytics/tna"
-                className="px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition"
+                className="px-2.5 py-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition"
               >
                 Dasbor HR (TNA)
+              </Link>
+              <Link
+                href="/login"
+                className="ml-2 px-3.5 py-1.5 text-xs sm:text-sm font-bold bg-[#FF9A8B] hover:bg-[#FFC3A0] text-slate-900 rounded-xl shadow-xs transition"
+              >
+                Sign In
               </Link>
             </nav>
           </div>

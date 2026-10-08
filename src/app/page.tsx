@@ -37,6 +37,48 @@ export default async function HomePage() {
         </p>
       </section>
 
+      {/* AIVY Sunrise Valuation Console Showcase Card */}
+      <section className="bg-gradient-to-r from-[#FFF5F2] via-[#FFFDF9] to-[#F0FAFF] border border-[#FF9A8B]/40 rounded-3xl p-6 sm:p-8 shadow-soft flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="space-y-3 max-w-xl">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-white/90 border border-[#FF9A8B]/30 rounded-full text-xs font-bold text-slate-900 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-[#FF9A8B]" />
+            <span>AIVY Cloud Valuation Console • Sunrise UI</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Asset Appraisal & Valuation Dashboard
+          </h2>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Antarmuka modern AIVY dengan estetika soft sunrise gradient, kurva tren valuasi Recharts (Coral & Sky Blue), pelacak riwayat timeline audit, dan login glassmorphic terenkripsi.
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white/80 border border-slate-200 text-slate-700">
+              Soft Sunrise Aesthetic
+            </span>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white/80 border border-slate-200 text-slate-700">
+              Glassmorphism Cards (18–24px)
+            </span>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white/80 border border-slate-200 text-slate-700">
+              Recharts Area Trend
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-shrink-0">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center space-x-2 px-5 py-3 rounded-2xl bg-[#FF9A8B] hover:bg-[#FFC3A0] text-slate-900 font-extrabold text-sm shadow-soft transition-all active:scale-98"
+          >
+            <span>Buka Dashboard AIVY</span>
+            <ArrowRight className="w-4 h-4 text-slate-900" />
+          </Link>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl bg-white/90 hover:bg-white text-slate-700 border border-slate-200 font-bold text-sm transition-all shadow-2xs"
+          >
+            <span>Halaman Login</span>
+          </Link>
+        </div>
+      </section>
+
       {/* Role Access Cards */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card 1: Portal Karyawan */}
