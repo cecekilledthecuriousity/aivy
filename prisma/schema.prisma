@@ -1,0 +1,154 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  HR_ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum AppraisalStatus {
+  PENDING_EVALUATION
+  SUBMITTED
+  NEEDS_REVISION
+  APPROVED
+  PUBLISHED
+}
+
+enum IDPStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id             String                          @id @default(cuid())
+  email          String                          @unique
+  name           String
+  passwordHash   String
+  role           Role                            @default(EMPLOYEE)
+  jobTitle       String
+  employeeCode   String                          @unique // NIP / ID Karyawan
+  departmentId   String
+  department     Department                      @relation(fields: [departmentId], references: [id])
+  managerId      String?
+  manager        User?                           @relation("ManagerSubordinates", fields: [managerId], references: [id])
+  subordinates   User[]                          @relation("ManagerSubordinates")
+  competencies   EmployeeCompetencyAssignment[]
+  evaluations    AppraisalSession[]              @relation("EmployeeEvaluations")
+  evaluatedByMe  AppraisalSession[]              @relation("EvaluatorSessions")
+  createdAt      DateTime                        @default(now())
+  updatedAt      DateTime                        @updatedAt
+}
+
+model Competency {
+  id          String                          @id @default(cuid())
+  code        String                          @unique // e.g. "TECH-01", "LEAD-02"
+  name        String
+  category    String                          // Core, Technical, Leadership
+  description String
+  assignments EmployeeCompetencyAssignment[]
+  scoreItems  AppraisalScoreItem[]
+  idpItems    IDPItem[]
+  createdAt   DateTime                        @default(now())
+  updatedAt   DateTime                        @updatedAt
+}
+
+model EmployeeCompetencyAssignment {
+  id            String     @id @default(cuid())
+  userId        String
+  competencyId  String
+  standardLevel Int        // 1 - 4
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competency    Competency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, competencyId])
+}
+
+model AppraisalPeriod {
+  id          String             @id @default(cuid())
+  name        String             // e.g. "Annual Appraisal 2026"
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean            @default(true)
+  sessions    AppraisalSession[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model AppraisalSession {
+  id              String               @id @default(cuid())
+  periodId        String
+  employeeId      String
+  evaluatorId     String
+  status          AppraisalStatus      @default(PENDING_EVALUATION)
+  managerNotes    String?
+  hrNotes         String?
+  period          AppraisalPeriod      @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  employee        User                 @relation("EmployeeEvaluations", fields: [employeeId], references: [id])
+  evaluator       User                 @relation("EvaluatorSessions", fields: [evaluatorId], references: [id])
+  scoreItems      AppraisalScoreItem[]
+  idpItems        IDPItem[]
+  aiSummary       AISummary?
+  submittedAt     DateTime?
+  approvedAt      DateTime?
+  publishedAt     DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@unique([periodId, employeeId])
+}
+
+model AppraisalScoreItem {
+  id             String           @id @default(cuid())
+  sessionId      String
+  competencyId   String
+  standardLevel  Int              // 1 - 4
+  actualLevel    Int              // 1 - 4
+  gapValue       Int              // actualLevel - standardLevel
+  gapLabel       String           // Deskripsi TDS ("Memerlukan pengembangan (-2)", dll)
+  managerComment String?
+  session        AppraisalSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  competency     Competency       @relation(fields: [competencyId], references: [id])
+
+  @@unique([sessionId, competencyId])
+}
+
+model IDPItem {
+  id           String           @id @default(cuid())
+  sessionId    String
+  competencyId String
+  actionPlan   String           // Program aksi/pelatihan/mentoring
+  targetDate   DateTime
+  status       IDPStatus        @default(PLANNED)
+  session      AppraisalSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  competency   Competency       @relation(fields: [competencyId], references: [id])
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model AISummary {
+  id                        String           @id @default(cuid())
+  sessionId                 String           @unique
+  overviewNarrative         String           // Ringkasan naratif menyeluruh
+  topStrengthsJson          String           // Array string dalam JSON
+  growthAreasJson           String           // Array string dalam JSON
+  actionRecommendationsJson String           // Array rekomendasi pelatihan/aksi dalam JSON
+  session                   AppraisalSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  generatedAt               DateTime         @default(now())
+}
