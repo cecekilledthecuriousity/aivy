@@ -117,7 +117,7 @@ describe('Export Routes Integration Tests', () => {
         user: { id: 'hr-1', role: Role.HR_ADMIN }
       } as any);
 
-      mockPrismaPeriodFindUnique.mockResolvedValueOnce({
+      mockPrismaPeriodFindUnique.mockResolvedValue({
         id: 'per-123',
         name: 'Annual 2026',
         sessions: [
