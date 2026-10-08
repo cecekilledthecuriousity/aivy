@@ -101,7 +101,7 @@ export function SkillMatrixForm({
         sessionId,
         managerNotes,
         scores: Object.values(scores),
-        idpItems: Object.values(idpItems)
+        idpItems: Object.values(idpItems).filter(item => item.actionPlan.trim() !== '' && item.targetDate !== '')
       };
       await saveEvaluationDraftAction(input);
       alert("Draft saved successfully");
@@ -113,6 +113,28 @@ export function SkillMatrixForm({
   };
 
   const handleSubmit = async () => {
+    // Validation
+    const unrated = competencies.filter(c => !(scores[c.id]?.actualLevel >= 1 && scores[c.id]?.actualLevel <= 4));
+    if (unrated.length > 0) {
+      alert("Please provide a rating for all competencies before submitting.");
+      return;
+    }
+
+    const missingIdp = competencies.filter(c => {
+      const score = scores[c.id]?.actualLevel || 0;
+      const gap = score - c.standardLevel;
+      if (gap < 0) {
+        const idp = idpItems[c.id];
+        return !idp || idp.actionPlan.trim() === '' || idp.targetDate === '';
+      }
+      return false;
+    });
+
+    if (missingIdp.length > 0) {
+      alert("Please provide complete IDP (Action Plan and Target Date) for all competencies with a negative gap.");
+      return;
+    }
+
     if (!confirm("Are you sure you want to submit? It cannot be edited after.")) return;
     setIsSubmitting(true);
     try {
@@ -124,7 +146,7 @@ export function SkillMatrixForm({
           const comp = competencies.find(c => c.id === item.competencyId);
           if (!comp) return false;
           const score = scores[comp.id]?.actualLevel || 0;
-          return score > 0 && score - comp.standardLevel < 0;
+          return score > 0 && score - comp.standardLevel < 0 && item.actionPlan.trim() !== '' && item.targetDate !== '';
         })
       };
       await submitManagerEvaluationAction(input);

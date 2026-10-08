@@ -6,13 +6,13 @@ import { canAccessSession } from "@/lib/rbac";
 import { SkillMatrixForm, CompetencyData, ScoreData, IDPData } from "@/components/evaluation/skill-matrix-form";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     sessionId: string;
-  };
+  }>;
 }
 
 export default async function ManagerEvaluationPage({ params }: PageProps) {
-  const { sessionId } = params;
+  const { sessionId } = await params;
   
   const userSession = await getServerSession(authOptions);
   if (!userSession?.user) {
