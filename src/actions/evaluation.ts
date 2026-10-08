@@ -6,12 +6,21 @@ import { evaluationSchema, EvaluationInput } from "@/schemas/evaluation-schema";
 import { calculateGap, getTdsGapLabel } from "@/lib/gap-calculator";
 import { canEditSession } from "@/lib/rbac";
 import { AppraisalStatus, IDPStatus } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 async function processEvaluation(
   input: EvaluationInput,
-  userId: string,
+  providedUserId?: string,
   targetStatus?: AppraisalStatus
 ) {
+  const sessionUser = await getServerSession(authOptions);
+  const userId = providedUserId || sessionUser?.user?.id;
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
   const parsed = evaluationSchema.parse(input);
 
   const user = await prisma.user.findUnique({
@@ -41,13 +50,22 @@ async function processEvaluation(
     throw new Error("Unauthorized to edit this session");
   }
 
+  if (targetStatus === AppraisalStatus.SUBMITTED) {
+    if (session.status !== AppraisalStatus.PENDING_EVALUATION && session.status !== AppraisalStatus.NEEDS_REVISION) {
+      throw new Error(`Cannot submit evaluation in ${session.status} status`);
+    }
+  }
+
   return await prisma.$transaction(async (tx) => {
     await tx.appraisalScoreItem.deleteMany({
       where: { sessionId: parsed.sessionId },
     });
-    await tx.iDPItem.deleteMany({
-      where: { sessionId: parsed.sessionId },
-    });
+
+    if (parsed.idpItems !== undefined) {
+      await tx.iDPItem.deleteMany({
+        where: { sessionId: parsed.sessionId },
+      });
+    }
 
     const scoreItemsToCreate = parsed.scores.map((score) => {
       const assignment = session.employee.competencies.find(
@@ -80,7 +98,7 @@ async function processEvaluation(
       });
     }
 
-    if (parsed.idpItems && parsed.idpItems.length > 0) {
+    if (parsed.idpItems !== undefined && parsed.idpItems.length > 0) {
       const idpItemsToCreate = parsed.idpItems.map((idp) => ({
         sessionId: parsed.sessionId,
         competencyId: idp.competencyId,
@@ -115,12 +133,10 @@ async function processEvaluation(
   });
 }
 
-export async function saveEvaluationDraftAction(input: EvaluationInput, userId?: string) {
-  if (!userId) throw new Error("Unauthorized");
-  return await processEvaluation(input, userId);
+export async function saveEvaluationDraftAction(input: EvaluationInput, providedUserId?: string) {
+  return await processEvaluation(input, providedUserId);
 }
 
-export async function submitManagerEvaluationAction(input: EvaluationInput, userId?: string) {
-  if (!userId) throw new Error("Unauthorized");
-  return await processEvaluation(input, userId, AppraisalStatus.SUBMITTED);
+export async function submitManagerEvaluationAction(input: EvaluationInput, providedUserId?: string) {
+  return await processEvaluation(input, providedUserId, AppraisalStatus.SUBMITTED);
 }

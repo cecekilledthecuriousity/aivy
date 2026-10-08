@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { saveEvaluationDraftAction, submitManagerEvaluationAction } from "@/actions/evaluation";
 import { evaluationSchema } from "@/schemas/evaluation-schema";
 import { AppraisalStatus, Role } from "@prisma/client";
+import { getServerSession } from "next-auth";
 
 // Mocking dependencies
 const mockPrisma = vi.hoisted(() => ({
@@ -17,6 +18,10 @@ const mockPrisma = vi.hoisted(() => ({
 
 vi.mock("@/lib/db", () => ({
   default: mockPrisma,
+}));
+
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn(),
 }));
 
 describe("Evaluation Actions", () => {
@@ -116,6 +121,8 @@ describe("Evaluation Actions", () => {
           }),
         ],
       });
+      // IDP items deleteMany should not be called since idpItems is not provided
+      expect(mockTx.iDPItem.deleteMany).not.toHaveBeenCalled();
     });
 
     it("submitManagerEvaluationAction should transition status to SUBMITTED", async () => {
@@ -151,6 +158,127 @@ describe("Evaluation Actions", () => {
           submittedAt: expect.any(Date),
         }),
       });
+    });
+
+    it("should reject when user is not authorized", async () => {
+      const otherUser = { id: "user-2", role: Role.EMPLOYEE };
+      mockPrisma.user.findUnique.mockResolvedValue(otherUser);
+      mockPrisma.appraisalSession.findUnique.mockResolvedValue(mockSession);
+
+      const input = {
+        sessionId: "sess-1",
+        scores: [{ competencyId: "comp-1", actualLevel: 2 }],
+      };
+
+      await expect(saveEvaluationDraftAction(input, "user-2")).rejects.toThrow("Unauthorized to edit this session");
+    });
+
+    it("should reject submit when session is already SUBMITTED", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, role: Role.HR_ADMIN });
+      mockPrisma.appraisalSession.findUnique.mockResolvedValue({
+        ...mockSession,
+        status: AppraisalStatus.SUBMITTED,
+      });
+
+      const input = {
+        sessionId: "sess-1",
+        scores: [{ competencyId: "comp-1", actualLevel: 2 }],
+      };
+
+      await expect(submitManagerEvaluationAction(input, "user-1")).rejects.toThrow("Cannot submit evaluation in SUBMITTED status");
+    });
+
+    it("should reject when competency is not assigned", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.appraisalSession.findUnique.mockResolvedValue(mockSession);
+
+      const mockTx = {
+        appraisalScoreItem: { deleteMany: vi.fn(), createMany: vi.fn() },
+        iDPItem: { deleteMany: vi.fn(), createMany: vi.fn() },
+        appraisalSession: { update: vi.fn().mockResolvedValue({ id: "sess-1", status: AppraisalStatus.PENDING_EVALUATION }) },
+      };
+      mockPrisma.$transaction.mockImplementation(async (callback) => callback(mockTx));
+
+      const input = {
+        sessionId: "sess-1",
+        scores: [{ competencyId: "comp-unknown", actualLevel: 2 }],
+      };
+
+      await expect(saveEvaluationDraftAction(input, "user-1")).rejects.toThrow("Competency comp-unknown not assigned to employee");
+    });
+
+    it("should persist IDP when idpItems are provided", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.appraisalSession.findUnique.mockResolvedValue(mockSession);
+      
+      const mockTx = {
+        appraisalScoreItem: { deleteMany: vi.fn(), createMany: vi.fn() },
+        iDPItem: { deleteMany: vi.fn(), createMany: vi.fn() },
+        appraisalSession: { update: vi.fn().mockResolvedValue({ id: "sess-1", status: AppraisalStatus.PENDING_EVALUATION }) },
+      };
+      
+      mockPrisma.$transaction.mockImplementation(async (callback) => callback(mockTx));
+
+      const input = {
+        sessionId: "sess-1",
+        scores: [
+          { competencyId: "comp-1", actualLevel: 2 },
+        ],
+        idpItems: [
+          {
+            competencyId: "comp-1",
+            actionPlan: "Read a book",
+            targetDate: "2026-12-31T00:00:00.000Z",
+          }
+        ]
+      };
+
+      await saveEvaluationDraftAction(input, "user-1");
+
+      expect(mockTx.iDPItem.deleteMany).toHaveBeenCalledWith({ where: { sessionId: "sess-1" } });
+      expect(mockTx.iDPItem.createMany).toHaveBeenCalledWith({
+        data: [
+          expect.objectContaining({
+            competencyId: "comp-1",
+            actionPlan: "Read a book",
+            targetDate: new Date("2026-12-31T00:00:00.000Z"),
+          }),
+        ],
+      });
+    });
+
+    it("should throw Unauthorized if userId is missing and no session", async () => {
+      (getServerSession as any).mockResolvedValue(null);
+
+      const input = {
+        sessionId: "sess-1",
+        scores: [{ competencyId: "comp-1", actualLevel: 2 }],
+      };
+
+      await expect(saveEvaluationDraftAction(input)).rejects.toThrow("Unauthorized");
+    });
+
+    it("should resolve userId from getServerSession if providedUserId is omitted", async () => {
+      (getServerSession as any).mockResolvedValue({ user: { id: "user-1" } });
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.appraisalSession.findUnique.mockResolvedValue(mockSession);
+
+      const mockTx = {
+        appraisalScoreItem: { deleteMany: vi.fn(), createMany: vi.fn() },
+        iDPItem: { deleteMany: vi.fn(), createMany: vi.fn() },
+        appraisalSession: { update: vi.fn().mockResolvedValue({ id: "sess-1" }) },
+      };
+      
+      mockPrisma.$transaction.mockImplementation(async (callback) => callback(mockTx));
+
+      const input = {
+        sessionId: "sess-1",
+        scores: [{ competencyId: "comp-1", actualLevel: 2 }],
+      };
+
+      await saveEvaluationDraftAction(input); // No providedUserId
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { id: "user-1" } });
     });
   });
 });
