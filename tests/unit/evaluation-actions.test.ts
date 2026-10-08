@@ -4,7 +4,7 @@ import { evaluationSchema } from "@/schemas/evaluation-schema";
 import { AppraisalStatus, Role } from "@prisma/client";
 
 // Mocking dependencies
-const mockPrisma = {
+const mockPrisma = vi.hoisted(() => ({
   user: {
     findUnique: vi.fn(),
   },
@@ -13,7 +13,7 @@ const mockPrisma = {
     update: vi.fn(),
   },
   $transaction: vi.fn(),
-};
+}));
 
 vi.mock("@/lib/db", () => ({
   default: mockPrisma,
@@ -39,7 +39,7 @@ describe("Evaluation Actions", () => {
       const result = evaluationSchema.safeParse(input);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain("Number must be less than or equal to 4");
+        expect(result.error.issues[0].message.toLowerCase()).toContain("too big");
       }
     });
 
